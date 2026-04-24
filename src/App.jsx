@@ -10,8 +10,8 @@ const DEFAULT_TEAMS = [
   { name: "Team 6", primary: "#1A5C5C", accent: "#E8942E", light: "#F5C96A" },
 ];
 
-const CATEGORIES = ["Lieblingsgetränk", "Geheimtalent", "Motto"];
-const CAT_ICONS = ["☕", "🎤", "💬"];
+const CATEGORIES = ["Dabei seit", "Motto"];
+const CAT_ICONS = ["📅", "💬"];
 
 const CARD_W = 63;
 const CARD_H = 88;
@@ -100,8 +100,8 @@ function CardPreview({ data, team, index, totalCards }) {
       {photo ? (
         <image
           href={photo}
-          x="28" y="138"
-          width={PX_W - 56} height="240"
+          x="28" y={138 + (data.photoOffsetY || 0)}
+          width={PX_W - 56} height={240 * (data.photoZoom || 1)}
           preserveAspectRatio="xMidYMid slice"
           clipPath={`url(#photo-${index})`}
         />
@@ -118,22 +118,24 @@ function CardPreview({ data, team, index, totalCards }) {
         </g>
       )}
 
-      {/* Spezialfähigkeit banner */}
-      <rect x="22" y="394" width={PX_W - 44} height="60" rx="6" fill={p} />
+      {/* Spezialfähigkeit banner - larger for longer text */}
+      <rect x="22" y="394" width={PX_W - 44} height="100" rx="6" fill={p} />
       <text x="34" y="412" fontSize="9" fill={a} letterSpacing="1.5" fontWeight="700">
         SPEZIALFÄHIGKEIT
       </text>
-      <text x="34" y="434" fontSize="13" fill="#E8E4D8" fontStyle="italic">
-        {specialAbility ? `"${specialAbility}"` : "Spezialfähigkeit eingeben..."}
-      </text>
+      {(specialAbility || "Spezialfähigkeit eingeben...").match(/.{1,40}/g)?.map((line, i) => (
+        <text key={i} x="34" y={432 + i * 18} fontSize="12" fill="#E8E4D8" fontStyle="italic">
+          {i === 0 && specialAbility ? `"${line}` : i === ((specialAbility || "").match(/.{1,40}/g)?.length || 1) - 1 && specialAbility ? `${line}"` : line}
+        </text>
+      ))}
 
       {/* Steckbrief */}
-      <text x="28" y="478" fontSize="9" fill={p} letterSpacing="1.5" fontWeight="700">
+      <text x="28" y="518" fontSize="9" fill={p} letterSpacing="1.5" fontWeight="700">
         STECKBRIEF
       </text>
 
       {CATEGORIES.map((cat, i) => {
-        const y = 490 + i * 40;
+        const y = 530 + i * 40;
         return (
           <g key={cat}>
             {i % 2 === 0 && (
@@ -251,7 +253,7 @@ function generateStrengthValues(numCards) {
 
 const emptyCard = () => ({
   name: "", level: "", photo: null, specialAbility: "",
-  stats: ["", "", ""], teamIndex: 0,
+  stats: ["", ""], teamIndex: 0, photoOffsetY: 0, photoZoom: 1,
 });
 
 export default function App() {
@@ -335,13 +337,19 @@ export default function App() {
     const photoBlock = `<rect x="28" y="138" width="${PX_W - 56}" height="240" rx="6" fill="${data.photo ? '#E0D8C8' : '#D5CCBA'}"/>`;
 
     const statsBlock = CATEGORIES.map((cat, i) => {
-      const y = 490 + i * 40;
+      const y = 530 + i * 40;
       const bg = i % 2 === 0 ? `<rect x="22" y="${y - 4}" width="${PX_W - 44}" height="36" rx="4" fill="${p}" opacity="0.07"/>` : "";
       return `${bg}
         <circle cx="40" cy="${y + 14}" r="12" fill="${a}"/>
         <text x="40" y="${y + 18}" font-size="11" font-weight="800" fill="${p}" text-anchor="middle" font-family="Trebuchet MS,sans-serif">${CAT_ICONS[i]}</text>
         <text x="60" y="${y + 18}" font-size="13" font-weight="700" fill="${p}" font-family="Trebuchet MS,sans-serif">${escXml(cat)}</text>
         <text x="${PX_W - 30}" y="${y + 18}" font-size="13" fill="${lp}" text-anchor="end" font-weight="600" font-family="Trebuchet MS,sans-serif">${escXml(data.stats[i] || "\u2014")}</text>`;
+    }).join("\n");
+
+    const abilityLines = (ability || "...").match(/.{1,40}/g) || ["..."];
+    const abilityBlock = abilityLines.map((line, i) => {
+      const text = i === 0 && data.specialAbility ? `"${line}` : i === abilityLines.length - 1 && data.specialAbility ? `${line}"` : line;
+      return `<text x="34" y="${432 + i * 18}" font-size="12" fill="#E8E4D8" font-style="italic" font-family="Trebuchet MS,sans-serif">${escXml(text)}</text>`;
     }).join("\n");
 
     return `<svg width="${PX_W}" height="${PX_H}" viewBox="0 0 ${PX_W} ${PX_H}" xmlns="http://www.w3.org/2000/svg">
@@ -370,10 +378,10 @@ export default function App() {
       <rect x="22" y="132" width="${PX_W - 44}" height="252" rx="8" fill="url(#border-${index})"/>
       <rect x="28" y="138" width="${PX_W - 56}" height="240" rx="6" fill="#E0D8C8"/>
       ${photoBlock}
-      <rect x="22" y="394" width="${PX_W - 44}" height="60" rx="6" fill="${p}"/>
+      <rect x="22" y="394" width="${PX_W - 44}" height="100" rx="6" fill="${p}"/>
       <text x="34" y="412" font-size="9" fill="${a}" letter-spacing="1.5" font-weight="700" font-family="Trebuchet MS,sans-serif">SPEZIALF\u00c4HIGKEIT</text>
-      <text x="34" y="434" font-size="13" fill="#E8E4D8" font-style="italic" font-family="Trebuchet MS,sans-serif">"${ability}"</text>
-      <text x="28" y="478" font-size="9" fill="${p}" letter-spacing="1.5" font-weight="700" font-family="Trebuchet MS,sans-serif">STECKBRIEF</text>
+      ${abilityBlock}
+      <text x="28" y="518" font-size="9" fill="${p}" letter-spacing="1.5" font-weight="700" font-family="Trebuchet MS,sans-serif">STECKBRIEF</text>
       ${statsBlock}
       <rect x="14" y="${PX_H - 32}" width="${PX_W - 28}" height="18" fill="${p}" clip-path="url(#card-${index})"/>
       <text x="${PX_W / 2}" y="${PX_H - 19}" font-size="9" fill="${a}" text-anchor="middle" letter-spacing="3" font-weight="700" font-family="Trebuchet MS,sans-serif">FREUNDSCHAFT.</text>
@@ -826,17 +834,37 @@ export default function App() {
                 >
                   {card.photo ? "Foto ändern" : "Foto hochladen"}
                 </button>
+                {card.photo && (
+                  <div style={{ marginTop: "8px" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "4px" }}>
+                      <label style={{ ...labelStyle, marginBottom: 0, minWidth: "80px" }}>Verschieben</label>
+                      <input
+                        type="range" min="-120" max="120" value={card.photoOffsetY || 0}
+                        onChange={e => updateCard("photoOffsetY", Number(e.target.value))}
+                        style={{ flex: 1 }}
+                      />
+                    </div>
+                    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                      <label style={{ ...labelStyle, marginBottom: 0, minWidth: "80px" }}>Zoom</label>
+                      <input
+                        type="range" min="1" max="2" step="0.05" value={card.photoZoom || 1}
+                        onChange={e => updateCard("photoZoom", Number(e.target.value))}
+                        style={{ flex: 1 }}
+                      />
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div style={{ marginBottom: "12px" }}>
                 <label style={labelStyle}>Spezialfähigkeit</label>
-                <input style={inputStyle} value={card.specialAbility} onChange={e => updateCard("specialAbility", e.target.value)} placeholder="Kann 5 Espressi trinken und trotzdem einschlafen." />
+                <textarea style={{ ...inputStyle, minHeight: "60px", resize: "vertical" }} value={card.specialAbility} onChange={e => updateCard("specialAbility", e.target.value)} placeholder="Hier kann ein längerer Text stehen, z.B. eine lustige Beschreibung der Person..." />
               </div>
 
               {CATEGORIES.map((cat, i) => (
-                <div key={cat} style={{ marginBottom: i < 2 ? "12px" : 0 }}>
+                <div key={cat} style={{ marginBottom: i < CATEGORIES.length - 1 ? "12px" : 0 }}>
                   <label style={labelStyle}>{CAT_ICONS[i]} {cat}</label>
-                  <input style={inputStyle} value={card.stats[i]} onChange={e => updateStat(i, e.target.value)} placeholder={cat} />
+                  <input style={inputStyle} value={card.stats[i]} onChange={e => updateStat(i, e.target.value)} placeholder={i === 0 ? "z.B. März 2023" : "z.B. Läuft bei mir."} />
                 </div>
               ))}
             </div>
