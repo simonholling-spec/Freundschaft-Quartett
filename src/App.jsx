@@ -118,14 +118,14 @@ function CardPreview({ data, team, index, totalCards }) {
         </g>
       )}
 
-      {/* Spezialfähigkeit banner - larger for longer text */}
+      {/* Beschreibung banner - larger for longer text */}
       <rect x="22" y="394" width={PX_W - 44} height="100" rx="6" fill={p} />
       <text x="34" y="412" fontSize="9" fill={a} letterSpacing="1.5" fontWeight="700">
-        SPEZIALFÄHIGKEIT
+        BESCHREIBUNG
       </text>
-      {(specialAbility || "Spezialfähigkeit eingeben...").match(/.{1,40}/g)?.map((line, i) => (
+      {wordWrap(specialAbility || "Beschreibung eingeben...", 48).slice(0, 4).map((line, i, arr) => (
         <text key={i} x="34" y={432 + i * 18} fontSize="12" fill="#E8E4D8" fontStyle="italic">
-          {i === 0 && specialAbility ? `"${line}` : i === ((specialAbility || "").match(/.{1,40}/g)?.length || 1) - 1 && specialAbility ? `${line}"` : line}
+          {specialAbility ? (i === 0 ? `"${line}` : i === arr.length - 1 ? `${line}"` : line) : line}
         </text>
       ))}
 
@@ -135,7 +135,9 @@ function CardPreview({ data, team, index, totalCards }) {
       </text>
 
       {CATEGORIES.map((cat, i) => {
-        const y = 530 + i * 40;
+        const y = 530 + i * 50;
+        const val = stats[i] || "—";
+        const valLines = i === 1 ? wordWrap(val, 30) : [val];
         return (
           <g key={cat}>
             {i % 2 === 0 && (
@@ -148,9 +150,17 @@ function CardPreview({ data, team, index, totalCards }) {
             <text x="60" y={y + 18} fontSize="13" fontWeight="700" fill={p}>
               {cat}
             </text>
-            <text x={PX_W - 30} y={y + 18} fontSize="13" fill={lightenColor(p, 30)} textAnchor="end" fontWeight="600">
-              {stats[i] || "—"}
-            </text>
+            {i === 0 ? (
+              <text x={PX_W - 30} y={y + 18} fontSize="12" fill={lightenColor(p, 30)} textAnchor="end" fontWeight="600">
+                {val}
+              </text>
+            ) : (
+              valLines.map((vl, vi) => (
+                <text key={vi} x="60" y={y + 18 + vi * 18} fontSize="12" fill={lightenColor(p, 30)} fontWeight="600">
+                  {vl}
+                </text>
+              ))
+            )}
           </g>
         );
       })}
@@ -238,6 +248,22 @@ function lightenColor(hex, amount) {
   const g = Math.min(255, ((num >> 8) & 0x00ff) + amount);
   const b = Math.min(255, (num & 0x0000ff) + amount);
   return `#${(1 << 24 | r << 16 | g << 8 | b).toString(16).slice(1)}`;
+}
+
+function wordWrap(text, maxChars) {
+  const words = text.split(' ');
+  const lines = [];
+  let current = '';
+  for (const word of words) {
+    if (current && (current + ' ' + word).length > maxChars) {
+      lines.push(current);
+      current = word;
+    } else {
+      current = current ? current + ' ' + word : word;
+    }
+  }
+  if (current) lines.push(current);
+  return lines;
 }
 
 function generateStrengthValues(numCards) {
@@ -337,18 +363,28 @@ export default function App() {
     const photoBlock = `<rect x="28" y="138" width="${PX_W - 56}" height="240" rx="6" fill="${data.photo ? '#E0D8C8' : '#D5CCBA'}"/>`;
 
     const statsBlock = CATEGORIES.map((cat, i) => {
-      const y = 530 + i * 40;
+      const y = 530 + i * 50;
+      const val = data.stats[i] || "\u2014";
       const bg = i % 2 === 0 ? `<rect x="22" y="${y - 4}" width="${PX_W - 44}" height="36" rx="4" fill="${p}" opacity="0.07"/>` : "";
+      let valBlock;
+      if (i === 0) {
+        valBlock = `<text x="${PX_W - 30}" y="${y + 18}" font-size="12" fill="${lp}" text-anchor="end" font-weight="600" font-family="Trebuchet MS,sans-serif">${escXml(val)}</text>`;
+      } else {
+        const valLines = wordWrap(val, 30);
+        valBlock = valLines.map((vl, vi) =>
+          `<text x="60" y="${y + 18 + vi * 18}" font-size="12" fill="${lp}" font-weight="600" font-family="Trebuchet MS,sans-serif">${escXml(vl)}</text>`
+        ).join("\n");
+      }
       return `${bg}
         <circle cx="40" cy="${y + 14}" r="12" fill="${a}"/>
         <text x="40" y="${y + 18}" font-size="11" font-weight="800" fill="${p}" text-anchor="middle" font-family="Trebuchet MS,sans-serif">${CAT_ICONS[i]}</text>
         <text x="60" y="${y + 18}" font-size="13" font-weight="700" fill="${p}" font-family="Trebuchet MS,sans-serif">${escXml(cat)}</text>
-        <text x="${PX_W - 30}" y="${y + 18}" font-size="13" fill="${lp}" text-anchor="end" font-weight="600" font-family="Trebuchet MS,sans-serif">${escXml(data.stats[i] || "\u2014")}</text>`;
+        ${valBlock}`;
     }).join("\n");
 
-    const abilityLines = (ability || "...").match(/.{1,40}/g) || ["..."];
-    const abilityBlock = abilityLines.map((line, i) => {
-      const text = i === 0 && data.specialAbility ? `"${line}` : i === abilityLines.length - 1 && data.specialAbility ? `${line}"` : line;
+    const abilityWrapped = wordWrap(ability || "...", 48).slice(0, 4);
+    const abilityBlock = abilityWrapped.map((line, i) => {
+      const text = data.specialAbility ? (i === 0 ? `"${line}` : i === abilityWrapped.length - 1 ? `${line}"` : line) : line;
       return `<text x="34" y="${432 + i * 18}" font-size="12" fill="#E8E4D8" font-style="italic" font-family="Trebuchet MS,sans-serif">${escXml(text)}</text>`;
     }).join("\n");
 
@@ -379,7 +415,7 @@ export default function App() {
       <rect x="28" y="138" width="${PX_W - 56}" height="240" rx="6" fill="#E0D8C8"/>
       ${photoBlock}
       <rect x="22" y="394" width="${PX_W - 44}" height="100" rx="6" fill="${p}"/>
-      <text x="34" y="412" font-size="9" fill="${a}" letter-spacing="1.5" font-weight="700" font-family="Trebuchet MS,sans-serif">SPEZIALF\u00c4HIGKEIT</text>
+      <text x="34" y="412" font-size="9" fill="${a}" letter-spacing="1.5" font-weight="700" font-family="Trebuchet MS,sans-serif">BESCHREIBUNG</text>
       ${abilityBlock}
       <text x="28" y="518" font-size="9" fill="${p}" letter-spacing="1.5" font-weight="700" font-family="Trebuchet MS,sans-serif">STECKBRIEF</text>
       ${statsBlock}
@@ -857,7 +893,7 @@ export default function App() {
               </div>
 
               <div style={{ marginBottom: "12px" }}>
-                <label style={labelStyle}>Spezialfähigkeit</label>
+                <label style={labelStyle}>Beschreibung</label>
                 <textarea style={{ ...inputStyle, minHeight: "60px", resize: "vertical" }} value={card.specialAbility} onChange={e => updateCard("specialAbility", e.target.value)} placeholder="Hier kann ein längerer Text stehen, z.B. eine lustige Beschreibung der Person..." />
               </div>
 
