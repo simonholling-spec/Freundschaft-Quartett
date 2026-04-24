@@ -123,7 +123,7 @@ function CardPreview({ data, team, index, totalCards }) {
       <text x="34" y="412" fontSize="9" fill={a} letterSpacing="1.5" fontWeight="700">
         BESCHREIBUNG
       </text>
-      {wordWrap(specialAbility || "Beschreibung eingeben...", 55).slice(0, 4).map((line, i, arr) => (
+      {wordWrap(specialAbility || "Beschreibung eingeben...", 70).slice(0, 4).map((line, i, arr) => (
         <text key={i} x="34" y={432 + i * 18} fontSize="12" fill="#E8E4D8" fontStyle="italic">
           {specialAbility ? (i === 0 ? `"${line}` : i === arr.length - 1 ? `${line}"` : line) : line}
         </text>
@@ -145,7 +145,7 @@ function CardPreview({ data, team, index, totalCards }) {
       <circle cx="40" cy="580" r="12" fill={a} />
       <text x="40" y="584" fontSize="11" fontWeight="800" fill={p} textAnchor="middle">{CAT_ICONS[1]}</text>
       <text x="60" y="584" fontSize="13" fontWeight="700" fill={p}>Motto</text>
-      {wordWrap(stats[1] || "—", 45).slice(0, 2).map((line, i) => (
+      {wordWrap(stats[1] || "—", 55).slice(0, 2).map((line, i) => (
         <text key={i} x="34" y={600 + i * 16} fontSize="11" fill={lightenColor(p, 30)} fontWeight="600" fontStyle="italic">
           {line}
         </text>
@@ -348,13 +348,13 @@ export default function App() {
 
     const photoBlock = `<rect x="28" y="138" width="${PX_W - 56}" height="240" rx="6" fill="${data.photo ? '#E0D8C8' : '#D5CCBA'}"/>`;
 
-    const abilityWrapped = wordWrap(ability || "...", 55).slice(0, 4);
+    const abilityWrapped = wordWrap(ability || "...", 70).slice(0, 4);
     const abilityBlock = abilityWrapped.map((line, i) => {
       const text = data.specialAbility ? (i === 0 ? `"${line}` : i === abilityWrapped.length - 1 ? `${line}"` : line) : line;
       return `<text x="34" y="${432 + i * 18}" font-size="12" fill="#E8E4D8" font-style="italic" font-family="Trebuchet MS,sans-serif">${escXml(text)}</text>`;
     }).join("\n");
 
-    const mottoLines = wordWrap(data.stats[1] || "\u2014", 45).slice(0, 2);
+    const mottoLines = wordWrap(data.stats[1] || "\u2014", 55).slice(0, 2);
     const mottoBlock = mottoLines.map((ml, mi) =>
       `<text x="34" y="${600 + mi * 16}" font-size="11" fill="${lp}" font-weight="600" font-style="italic" font-family="Trebuchet MS,sans-serif">${escXml(ml)}</text>`
     ).join("\n");
