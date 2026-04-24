@@ -123,7 +123,7 @@ function CardPreview({ data, team, index, totalCards }) {
       <text x="34" y="412" fontSize="9" fill={a} letterSpacing="1.5" fontWeight="700">
         BESCHREIBUNG
       </text>
-      {wordWrap(specialAbility || "Beschreibung eingeben...", 48).slice(0, 4).map((line, i, arr) => (
+      {wordWrap(specialAbility || "Beschreibung eingeben...", 55).slice(0, 4).map((line, i, arr) => (
         <text key={i} x="34" y={432 + i * 18} fontSize="12" fill="#E8E4D8" fontStyle="italic">
           {specialAbility ? (i === 0 ? `"${line}` : i === arr.length - 1 ? `${line}"` : line) : line}
         </text>
@@ -134,36 +134,22 @@ function CardPreview({ data, team, index, totalCards }) {
         STECKBRIEF
       </text>
 
-      {CATEGORIES.map((cat, i) => {
-        const y = 530 + i * 50;
-        const val = stats[i] || "—";
-        const valLines = i === 1 ? wordWrap(val, 30) : [val];
-        return (
-          <g key={cat}>
-            {i % 2 === 0 && (
-              <rect x="22" y={y - 4} width={PX_W - 44} height="36" rx="4" fill={p} opacity="0.07" />
-            )}
-            <circle cx="40" cy={y + 14} r="12" fill={a} />
-            <text x="40" y={y + 18} fontSize="11" fontWeight="800" fill={p} textAnchor="middle">
-              {CAT_ICONS[i]}
-            </text>
-            <text x="60" y={y + 18} fontSize="13" fontWeight="700" fill={p}>
-              {cat}
-            </text>
-            {i === 0 ? (
-              <text x={PX_W - 30} y={y + 18} fontSize="12" fill={lightenColor(p, 30)} textAnchor="end" fontWeight="600">
-                {val}
-              </text>
-            ) : (
-              valLines.map((vl, vi) => (
-                <text key={vi} x="60" y={y + 18 + vi * 18} fontSize="12" fill={lightenColor(p, 30)} fontWeight="600">
-                  {vl}
-                </text>
-              ))
-            )}
-          </g>
-        );
-      })}
+      {/* Dabei seit - inline */}
+      <rect x="22" y="526" width={PX_W - 44} height="36" rx="4" fill={p} opacity="0.07" />
+      <circle cx="40" cy="544" r="12" fill={a} />
+      <text x="40" y="548" fontSize="11" fontWeight="800" fill={p} textAnchor="middle">{CAT_ICONS[0]}</text>
+      <text x="60" y="548" fontSize="13" fontWeight="700" fill={p}>Dabei seit</text>
+      <text x={PX_W - 30} y="548" fontSize="12" fill={lightenColor(p, 30)} textAnchor="end" fontWeight="600">{stats[0] || "—"}</text>
+
+      {/* Motto - label on first line, value below */}
+      <circle cx="40" cy="580" r="12" fill={a} />
+      <text x="40" y="584" fontSize="11" fontWeight="800" fill={p} textAnchor="middle">{CAT_ICONS[1]}</text>
+      <text x="60" y="584" fontSize="13" fontWeight="700" fill={p}>Motto</text>
+      {wordWrap(stats[1] || "—", 45).slice(0, 2).map((line, i) => (
+        <text key={i} x="34" y={600 + i * 16} fontSize="11" fill={lightenColor(p, 30)} fontWeight="600" fontStyle="italic">
+          {line}
+        </text>
+      ))}
 
       {/* Bottom bar */}
       <rect x="14" y={PX_H - 32} width={PX_W - 28} height="18" fill={p} clipPath={`url(#card-${index})`} />
@@ -362,31 +348,16 @@ export default function App() {
 
     const photoBlock = `<rect x="28" y="138" width="${PX_W - 56}" height="240" rx="6" fill="${data.photo ? '#E0D8C8' : '#D5CCBA'}"/>`;
 
-    const statsBlock = CATEGORIES.map((cat, i) => {
-      const y = 530 + i * 50;
-      const val = data.stats[i] || "\u2014";
-      const bg = i % 2 === 0 ? `<rect x="22" y="${y - 4}" width="${PX_W - 44}" height="36" rx="4" fill="${p}" opacity="0.07"/>` : "";
-      let valBlock;
-      if (i === 0) {
-        valBlock = `<text x="${PX_W - 30}" y="${y + 18}" font-size="12" fill="${lp}" text-anchor="end" font-weight="600" font-family="Trebuchet MS,sans-serif">${escXml(val)}</text>`;
-      } else {
-        const valLines = wordWrap(val, 30);
-        valBlock = valLines.map((vl, vi) =>
-          `<text x="60" y="${y + 18 + vi * 18}" font-size="12" fill="${lp}" font-weight="600" font-family="Trebuchet MS,sans-serif">${escXml(vl)}</text>`
-        ).join("\n");
-      }
-      return `${bg}
-        <circle cx="40" cy="${y + 14}" r="12" fill="${a}"/>
-        <text x="40" y="${y + 18}" font-size="11" font-weight="800" fill="${p}" text-anchor="middle" font-family="Trebuchet MS,sans-serif">${CAT_ICONS[i]}</text>
-        <text x="60" y="${y + 18}" font-size="13" font-weight="700" fill="${p}" font-family="Trebuchet MS,sans-serif">${escXml(cat)}</text>
-        ${valBlock}`;
-    }).join("\n");
-
-    const abilityWrapped = wordWrap(ability || "...", 48).slice(0, 4);
+    const abilityWrapped = wordWrap(ability || "...", 55).slice(0, 4);
     const abilityBlock = abilityWrapped.map((line, i) => {
       const text = data.specialAbility ? (i === 0 ? `"${line}` : i === abilityWrapped.length - 1 ? `${line}"` : line) : line;
       return `<text x="34" y="${432 + i * 18}" font-size="12" fill="#E8E4D8" font-style="italic" font-family="Trebuchet MS,sans-serif">${escXml(text)}</text>`;
     }).join("\n");
+
+    const mottoLines = wordWrap(data.stats[1] || "\u2014", 45).slice(0, 2);
+    const mottoBlock = mottoLines.map((ml, mi) =>
+      `<text x="34" y="${600 + mi * 16}" font-size="11" fill="${lp}" font-weight="600" font-style="italic" font-family="Trebuchet MS,sans-serif">${escXml(ml)}</text>`
+    ).join("\n");
 
     return `<svg width="${PX_W}" height="${PX_H}" viewBox="0 0 ${PX_W} ${PX_H}" xmlns="http://www.w3.org/2000/svg">
       <defs>
@@ -418,7 +389,15 @@ export default function App() {
       <text x="34" y="412" font-size="9" fill="${a}" letter-spacing="1.5" font-weight="700" font-family="Trebuchet MS,sans-serif">BESCHREIBUNG</text>
       ${abilityBlock}
       <text x="28" y="518" font-size="9" fill="${p}" letter-spacing="1.5" font-weight="700" font-family="Trebuchet MS,sans-serif">STECKBRIEF</text>
-      ${statsBlock}
+      <rect x="22" y="526" width="${PX_W - 44}" height="36" rx="4" fill="${p}" opacity="0.07"/>
+      <circle cx="40" cy="544" r="12" fill="${a}"/>
+      <text x="40" y="548" font-size="11" font-weight="800" fill="${p}" text-anchor="middle" font-family="Trebuchet MS,sans-serif">${CAT_ICONS[0]}</text>
+      <text x="60" y="548" font-size="13" font-weight="700" fill="${p}" font-family="Trebuchet MS,sans-serif">Dabei seit</text>
+      <text x="${PX_W - 30}" y="548" font-size="12" fill="${lp}" text-anchor="end" font-weight="600" font-family="Trebuchet MS,sans-serif">${escXml(data.stats[0] || "\u2014")}</text>
+      <circle cx="40" cy="580" r="12" fill="${a}"/>
+      <text x="40" y="584" font-size="11" font-weight="800" fill="${p}" text-anchor="middle" font-family="Trebuchet MS,sans-serif">${CAT_ICONS[1]}</text>
+      <text x="60" y="584" font-size="13" font-weight="700" fill="${p}" font-family="Trebuchet MS,sans-serif">Motto</text>
+      ${mottoBlock}
       <rect x="14" y="${PX_H - 32}" width="${PX_W - 28}" height="18" fill="${p}" clip-path="url(#card-${index})"/>
       <text x="${PX_W / 2}" y="${PX_H - 19}" font-size="9" fill="${a}" text-anchor="middle" letter-spacing="3" font-weight="700" font-family="Trebuchet MS,sans-serif">FREUNDSCHAFT.</text>
     </svg>`;
